@@ -149,7 +149,7 @@ PS:所有默认配置在fastDFS源码包里都有)
 ##### 默认tracker server配置
 [tracker_default](default-conf/tracker.conf)
 
-##### 本例配置tracker
+##### 本例配置
     [root@localhost fdfs]# cat /etc/fdfs/tracker.conf
     disabled=false
     bind_addr=
@@ -202,3 +202,416 @@ PS:所有默认配置在fastDFS源码包里都有)
 #### Storage配置
 ##### 默认storage配置
 [storage_default](default-conf/storage.conf)
+##### 本例配置:
+PS:同一台机器上A,B,C三组配置除了端口和路径不一致,其他相同
+
+    [root@localhost fdfs]# cat /etc/fdfs/storage_A.conf
+    disabled=false
+    group_name=groupA
+    bind_addr=
+    client_bind=true
+    port=23000[本处在groupB,C处分别为23001,23002]
+    connect_timeout=30
+    network_timeout=60
+    heart_beat_interval=30
+    stat_report_interval=60
+    base_path=/data/dfs/group1[本处在groupB,C处分别为group2,group3]
+    max_connections=256
+    buff_size = 256KB
+    work_threads=4
+    disk_rw_separated = true
+    disk_reader_threads = 1
+    disk_writer_threads = 1
+    sync_wait_msec=50
+    sync_interval=0
+    sync_start_time=00:00
+    sync_end_time=23:59
+    write_mark_file_freq=500
+    store_path_count=1[存储路径数量]
+    store_path0=/data/dfs/group1[存储路径启动的一个从0开始到9?]
+    subdir_count_per_path=256
+    tracker_server=192.168.88.150:22122
+    tracker_server=192.168.88.149:22122
+    tracker_server=192.168.88.134:22122
+    log_level=info
+    run_by_group=
+    run_by_user=
+    allow_hosts=*
+    file_distribute_path_mode=0
+    file_distribute_rotate_count=100
+    fsync_after_written_bytes=0
+    sync_log_buff_interval=10
+    sync_binlog_buff_interval=10
+    sync_stat_file_interval=300
+    thread_stack_size=512KB
+    upload_priority=10
+    if_alias_prefix=
+    check_file_duplicate=0
+    file_signature_method=hash
+    key_namespace=FastDFS
+    keep_alive=0
+    use_access_log = false
+    rotate_access_log = false
+    access_log_rotate_time=00:00
+    rotate_error_log = false
+    error_log_rotate_time=00:00
+    rotate_access_log_size = 0
+    rotate_error_log_size = 0
+    file_sync_skip_invalid_record=false
+    use_connection_pool = false
+    connection_pool_max_idle_time = 3600
+    http.domain_name=
+    http.server_port=8888
+
+#### mod_fastdfs默认配置:
+PS:mod_fastdfs.conf是nginx或httpd使用的一些数据?默认位置/etc/fdfs/mod_fastdfs.conf 似乎无法修改位置
+[mod_fastdfs_default](default-conf/mod_fastdfs.conf)
+##### 本例配置
+    [root@localhost fdfs]# cat /etc/fdfs/mod_fastdfs.conf
+    connect_timeout=2
+    network_timeout=30
+    base_path=/data/dfs/tracker
+    load_fdfs_parameters_from_tracker=true
+    storage_sync_file_max_delay = 86400
+    use_storage_id = false
+    storage_ids_filename = storage_ids.conf
+    tracker_server=192.168.88.149:22122
+    tracker_server=192.168.88.150:22122
+    tracker_server=192.168.88.134:22122
+    #storage_server_port=23000
+    #group_name=groupC
+    url_have_group_name = true
+    #store_path_count=3
+    #store_path0=/data/dfs/group1
+    #store_path1=/data/dfs/group2
+    #store_path2=/data/dfs/group3
+    log_level=info
+    log_filename=
+    response_mode=proxy
+    if_alias_prefix=
+    http.need_find_content_type=false
+    flv_support = true
+    flv_extension = flv
+    group_count = 2
+
+    [group1]
+    group_name=groupA
+    storage_server_port=23000
+    store_path_count=1
+    store_path0=/data/dfs/group1
+
+    [group2]
+    group_name=groupB
+    storage_server_port=23001
+    store_path_count=1
+    store_path0=/data/dfs/group2
+
+    #[group3]
+    #group_name=groupC
+    #storage_server_port=23002
+    #store_path_count=1
+    #store_path0=/data/dfs/group3
+**PS**,此处的group组配置为本地组配置,必须从group1开始,例如本地有groupB,groupC,那么组配置为,否则nginx模块在启动时会报错:
+
+    ERROR - file: /usr/local/src/fastdfs-nginx-module/src//common.c, line: 103, section: group1, you must set parameter: group_name!
+如下所示:
+
+    [group1]
+    group_name=groupA
+    storage_server_port=23000
+    store_path_count=1
+    store_path0=/data/dfs/groupB
+
+    [group2]
+    group_name=groupC
+    storage_server_port=23001
+    store_path_count=1
+    store_path0=/data/dfs/groupC
+
+#### Nginx编译:
+    [root@localhost fdfs]# /usr/local/nginx/sbin/nginx -V
+    nginx version: nginx/1.11.10
+    built by gcc 4.8.5 20150623 (Red Hat 4.8.5-11) (GCC)
+    configure arguments: --add-module=/usr/local/src/fastdfs-nginx-module/src/ --prefix=/usr/local/nginx
+    Nginx配置:
+    [root@localhost fdfs]# grep -Ev "#|^$" /usr/local/nginx/conf/nginx.conf
+    worker_processes  1;
+    events {
+        worker_connections  1024;
+    }
+    http {
+        include       mime.types;
+        default_type  application/octet-stream;
+        sendfile        on;
+        keepalive_timeout  65;
+        server {
+            listen       8080;
+            server_name  localhost;
+            location   /group {
+                ngx_fastdfs_module;
+    	root /data/dfs/;
+            }
+            error_page   500 502 503 504  /50x.html;
+            location = /50x.html {
+                root   html;
+            }
+        }
+    }
+环境变量设置:略
+启动环境:
+
+HOST1:
+
+    [root@localhost fdfs]# pwd
+    /etc/fdfs
+    fdfs_trackerd  tracker.conf
+    fdfs_storaged torage_A.conf
+    fdfs_storaged torage_B.conf
+    /usr/local/nginx/sbin/nginx
+HOST2:
+
+    fdfs_trackerd  tracker.conf
+    fdfs_storaged torage_A.conf
+    fdfs_storaged torage_C.conf
+    /usr/local/nginx/sbin/nginx
+HOST3:
+
+    fdfs_trackerd  tracker.conf
+    fdfs_storaged torage_C.conf
+    fdfs_storaged torage_B.conf
+    /usr/local/nginx/sbin/nginx
+##### 测试:
+为方便测试,本例子存储时使用轮训方法,实际使用建议按照空间剩余方法来存储
+
+    [root@localhost fdfs]# fdfs_test /etc/fdfs/client.conf upload ~/anaconda-ks.cfg
+    This is FastDFS client test program v4.06
+
+    Copyright (C) 2008, Happy Fish / YuQing
+
+    FastDFS may be copied only under the terms of the GNU General
+    Public License V3, which may be found in the FastDFS source kit.
+    Please visit the FastDFS Home Page http://www.csource.org/
+    for more detail.
+
+    [2017-03-22 02:31:37] DEBUG - base_path=/data/dfs/tracker, connect_timeout=30, network_timeout=60, tracker_server_count=3, anti_steal_token=0, anti_steal_secret_key length=0, use_connection_pool=0, g_connection_pool_max_idle_time=3600s, use_storage_id=0, storage server id count: 0
+
+    tracker_query_storage_store_list_without_group:
+    	server 1. group_name=, ip_addr=192.168.88.149, port=23000
+    	server 2. group_name=, ip_addr=192.168.88.150, port=23000
+
+    group_name=groupB, ip_addr=192.168.88.149, port=23001
+    storage_upload_by_filename
+    group_name=groupB, remote_filename=M00/00/00/wKhYlVjSGkmAKSsbAAAFX016BtA960.cfg
+    source ip address: 192.168.88.149
+    file timestamp=2017-03-22 02:31:37
+    file size=1375
+    file crc32=1299842768
+    file url: http://192.168.88.134:8080/groupB/M00/00/00/wKhYlVjSGkmAKSsbAAAFX016BtA960.cfg
+    storage_upload_slave_by_filename
+    group_name=groupB, remote_filename=M00/00/00/wKhYlVjSGkmAKSsbAAAFX016BtA960_big.cfg
+    source ip address: 192.168.88.149
+    file timestamp=2017-03-22 02:31:37
+    file size=1375
+    file crc32=1299842768
+    file url: http://192.168.88.134:8080/groupB/M00/00/00/wKhYlVjSGkmAKSsbAAAFX016BtA960_big.cfg
+
+http下载测试
+
+    [root@localhost fdfs]# wget http://192.168.88.134:8080/groupB/M00/00/00/wKhYlVjSGkmAKSsbAAAFX016BtA960.cfg
+    --2017-03-22 02:33:17--  http://192.168.88.134:8080/groupB/M00/00/00/wKhYlVjSGkmAKSsbAAAFX016BtA960.cfg
+    Connecting to 192.168.88.134:8080... connected.
+    HTTP request sent, awaiting response... 200 OK
+    Length: 1375 (1.3K)
+    Saving to: ‘wKhYlVjSGkmAKSsbAAAFX016BtA960.cfg’
+
+    100%[===================================================================================================================>] 1,375       --.-K/s   in 0s      
+
+    2017-03-22 02:33:17 (95.7 MB/s) - ‘wKhYlVjSGkmAKSsbAAAFX016BtA960.cfg’ saved [1375/1375]
+    [root@localhost fdfs]# wget http://192.168.88.149:8080/groupB/M00/00/00/wKhYlVjSGkmAKSsbAAAFX016BtA960.cfg
+    --2017-03-22 02:33:23--  http://192.168.88.149:8080/groupB/M00/00/00/wKhYlVjSGkmAKSsbAAAFX016BtA960.cfg
+    Connecting to 192.168.88.149:8080... connected.
+    HTTP request sent, awaiting response... 200 OK
+    Length: 1375 (1.3K)
+    Saving to: ‘wKhYlVjSGkmAKSsbAAAFX016BtA960.cfg.1’
+
+    100%[===================================================================================================================>] 1,375       --.-K/s   in 0s      
+
+    2017-03-22 02:33:23 (115 MB/s) - ‘wKhYlVjSGkmAKSsbAAAFX016BtA960.cfg.1’ saved [1375/1375]
+
+    [root@localhost fdfs]# wget http://192.168.88.150:8080/groupB/M00/00/00/wKhYlVjSGkmAKSsbAAAFX016BtA960.cfg
+    --2017-03-22 02:33:28--  http://192.168.88.150:8080/groupB/M00/00/00/wKhYlVjSGkmAKSsbAAAFX016BtA960.cfg
+    Connecting to 192.168.88.150:8080... connected.
+    HTTP request sent, awaiting response... 200 OK
+    Length: 1375 (1.3K)
+    Saving to: ‘wKhYlVjSGkmAKSsbAAAFX016BtA960.cfg.2’
+
+    100%[===================================================================================================================>] 1,375       --.-K/s   in 0s      
+
+    2017-03-22 02:33:28 (110 MB/s) - ‘wKhYlVjSGkmAKSsbAAAFX016BtA960.cfg.2’ saved [1375/1375]
+
+#### Leader切换测试:
+关闭leader后查看新的leader(可能需要等10s+)
+
+    [root@localhost fdfs]# fdfs_monitor /etc/fdfs/client.conf|grep "tracker server"
+    tracker server is 192.168.88.149:22122
+    [root@localhost fdfs]# ip a|perl -ne 'print $1 if /(?=inet)(.*)\/24/;'
+    inet 192.168.88.149
+    [root@localhost fdfs]# ps -ef |grep tracker
+    root       2060      1  0 Mar21 ?        00:00:02 fdfs_trackerd tracker.conf
+    root       3410   2015  0 03:31 pts/0    00:00:00 grep --color=auto tracker
+    [root@localhost fdfs]# kill -15 2060
+    [root@localhost fdfs]# fdfs_monitor /etc/fdfs/client.conf|grep "tracker server"
+    [2017-03-22 03:31:47] ERROR - file: ../common/connection_pool.c, line: 84, connect to 192.168.88.149:22122 fail, errno: 111, error info: Connection refused
+    tracker server is 192.168.88.150:22122
+
+##### 常用命令:
+测试:
+    fdfs_test <config_file> <operation>
+    	operation: upload, download, getmeta, setmeta, delete and query_servers
+Ex:
+    [root@localhost fdfs]# fdfs_test /etc/fdfs/client.conf upload ~/anaconda-ks.cfg
+    This is FastDFS client test program v4.06
+
+    Copyright (C) 2008, Happy Fish / YuQing
+
+    FastDFS may be copied only under the terms of the GNU General
+    Public License V3, which may be found in the FastDFS source kit.
+    Please visit the FastDFS Home Page http://www.csource.org/
+    for more detail.
+
+    [2017-03-22 03:10:55] DEBUG - base_path=/data/dfs/tracker, connect_timeout=30, network_timeout=60, tracker_server_count=3, anti_steal_token=0, anti_steal_secret_key length=0, use_connection_pool=0, g_connection_pool_max_idle_time=3600s, use_storage_id=0, storage server id count: 0
+
+    tracker_query_storage_store_list_without_group:
+    	server 1. group_name=, ip_addr=192.168.88.149, port=23000
+    	server 2. group_name=, ip_addr=192.168.88.150, port=23000
+
+    group_name=groupB, ip_addr=192.168.88.134, port=23001
+    storage_upload_by_filename
+    group_name=groupB, remote_filename=M00/00/00/wKhYhljSI3-AM982AAAFX016BtA685.cfg
+    source ip address: 192.168.88.134
+    file timestamp=2017-03-22 03:10:55
+    file size=1375
+    file crc32=1299842768
+    file url: http://192.168.88.134:8080/groupB/M00/00/00/wKhYhljSI3-AM982AAAFX016BtA685.cfg
+    storage_upload_slave_by_filename
+    group_name=groupB, remote_filename=M00/00/00/wKhYhljSI3-AM982AAAFX016BtA685_big.cfg
+    source ip address: 192.168.88.134
+    file timestamp=2017-03-22 03:10:55
+    file size=1375
+    file crc32=1299842768
+    file url: http://192.168.88.134:8080/groupB/M00/00/00/wKhYhljSI3-AM982AAAFX016BtA685_big.cfg
+
+
+上传:
+
+    fdfs_upload_file
+    Usage: fdfs_upload_file <config_filename> <local_filename> [storage_ip:port] [store_path_index]
+Ex:
+
+    [root@localhost fdfs]# fdfs_upload_file /etc/fdfs/client.conf ~/anaconda-ks.cfg
+    groupC/M00/00/00/wKhYhljSIxKANAyCAAAFX016BtA928.cfg
+下载:
+
+    fdfs_upload_file
+    Usage: fdfs_upload_file <config_filename> <local_filename> [storage_ip:port] [store_path_index]
+
+Ex:
+
+    [root@localhost fdfs]# fdfs_download_file /etc/fdfs/client.conf groupC/M00/00/00/wKhYhljSIxKANAyCAAAFX016BtA928.cfg
+
+删除:
+
+    fdfs_delete_file
+    Usage: fdfs_delete_file <config_file> <file id>
+Ex:
+
+    [root@localhost fdfs]# fdfs_delete_file /etc/fdfs/client.conf groupB/M00/00/00/wKhYhljSI3-AM982AAAFX016BtA685_big.cfg
+
+监控:
+
+    fdfs_monitor
+    Usage: fdfs_monitor <config_file> [-h <tracker_server>] [list|delete|set_trunk_server <group_name> [storage_id]]
+
+Ex: 监控输出太长,已删除部分内容
+
+    [root@localhost fdfs]# fdfs_monitor /etc/fdfs/client.conf
+    [2017-03-22 03:13:59] DEBUG - base_path=/data/dfs/tracker, connect_timeout=30, network_timeout=60, tracker_server_count=3, anti_steal_token=0, anti_steal_secret_key length=0, use_connection_pool=0, g_connection_pool_max_idle_time=3600s, use_storage_id=0, storage server id count: 0
+
+    server_count=3, server_index=2
+
+    tracker server is 192.168.88.150:22122
+
+    group count: 3
+
+    Group 1:
+    group name = groupA
+    disk total space = 17397 MB
+    disk free space = 11004 MB
+    trunk free space = 0 MB
+    storage server count = 3
+    active server count = 2
+    storage server port = 23000
+    storage HTTP port = 8888
+    store path count = 1
+    subdir count per path = 256
+    current write server index = 0
+    current trunk file id = 0
+    	Storage 1:
+    		id = 192.168.88.150
+    		ip_addr = 192.168.88.150  ACTIVE
+    		http domain =
+    		version = 4.06
+    		join time = 2017-03-20 21:50:32
+    		up time = 2017-03-22 01:48:02
+    		total storage = 17397 MB
+    		free storage = 11004 MB
+    		upload priority = 10
+    		store_path_count = 1
+    		subdir_count_per_path = 256
+    		storage_port = 23000
+    		storage_http_port = 8888
+    		current_write_path = 0
+    		source storage id= 192.168.88.134
+    		if_trunk_server= 0
+    		total_upload_count = 20
+    		success_upload_count = 20
+    		total_append_count = 0
+    		success_append_count = 0
+    		total_modify_count = 0
+    		success_modify_count = 0
+    		total_truncate_count = 0
+    		success_truncate_count = 0
+    		total_set_meta_count = 20
+    		success_set_meta_count = 20
+    		total_delete_count = 0
+    		success_delete_count = 0
+    		total_download_count = 0
+    		success_download_count = 0
+    		total_get_meta_count = 0
+    		success_get_meta_count = 0
+    		total_create_link_count = 0
+    		success_create_link_count = 0
+    		total_delete_link_count = 0
+    		success_delete_link_count = 0
+    		total_upload_bytes = 2208129198
+    		success_upload_bytes = 2208129198
+    		total_append_bytes = 0
+    		success_append_bytes = 0
+    		total_modify_bytes = 0
+    		success_modify_bytes = 0
+    		stotal_download_bytes = 0
+    		success_download_bytes = 0
+    		total_sync_in_bytes = 92083105
+    		success_sync_in_bytes = 92083105
+    		total_sync_out_bytes = 4416257508
+    		success_sync_out_bytes = 4416257508
+    		total_file_open_count = 93
+    		success_file_open_count = 93
+    		total_file_read_count = 0
+    		success_file_read_count = 0
+    		total_file_write_count = 8863
+    		success_file_write_count = 8863
+    		last_heart_beat_time = 2017-03-22 03:13:50
+    		last_source_update = 2017-03-22 01:53:17
+    		last_sync_update = 2017-03-22 02:12:12
+    		last_synced_timestamp = 2017-03-22 02:12:07 (0s delay)
