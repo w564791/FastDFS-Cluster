@@ -126,7 +126,7 @@ http://blog.csdn.net/hfty290/article/details/42030339*
 
   #mkdir -p /data/dfs/{group1,group2,grou3,group4,tracker}
 
-默认client配置:(
+##### 默认client配置:(
 PS:所有默认配置在fastDFS源码包里都有)
 
 [client_default](default-conf/client.conf)
@@ -200,7 +200,7 @@ PS:所有默认配置在fastDFS源码包里都有)
     http.check_alive_type=tcp
     http.check_alive_uri=/status.html
 
-#### Storage配置
+##### Storage配置
 ##### 默认storage配置
 [storage_default](default-conf/storage.conf)
 ##### 本例配置:
@@ -264,7 +264,7 @@ PS:同一台机器上A,B,C三组配置除了端口和路径不一致,其他相�
     http.domain_name=
     http.server_port=8888
 
-#### mod_fastdfs默认配置:
+##### mod_fastdfs默认配置:
 PS:mod_fastdfs.conf是nginx或httpd使用的一些数据?默认位置/etc/fdfs/mod_fastdfs.conf 似乎无法修改位置
 [mod_fastdfs_default](default-conf/mod_fastdfs.conf)
 ##### 本例配置
@@ -329,13 +329,13 @@ PS:mod_fastdfs.conf是nginx或httpd使用的一些数据?默认位置/etc/fdfs/m
     store_path_count=1
     store_path0=/data/dfs/groupC
 
-#### Nginx编译:
+##### Nginx编译:
     [root@localhost fdfs]# /usr/local/nginx/sbin/nginx -V
     nginx version: nginx/1.11.10
     built by gcc 4.8.5 20150623 (Red Hat 4.8.5-11) (GCC)
     configure arguments: --add-module=/usr/local/src/fastdfs-nginx-module/src/ --prefix=/usr/local/nginx
 
-#### Nginx配置:
+##### Nginx配置:
     [root@localhost fdfs]# grep -Ev "#|^$" /usr/local/nginx/conf/nginx.conf
     worker_processes  1;
     events {
@@ -362,7 +362,7 @@ PS:mod_fastdfs.conf是nginx或httpd使用的一些数据?默认位置/etc/fdfs/m
 环境变量设置:略
 启动环境:
 
-HOST1:
+##### HOST1:
 
     [root@localhost fdfs]# pwd
     /etc/fdfs
@@ -372,7 +372,7 @@ HOST1:
     [root@localhost fdfs]# fdfs_storaged torage_B.conf    
     [root@localhost fdfs]# /usr/local/nginx/sbin/nginx
     
-HOST2:
+##### HOST2:
     [root@localhost fdfs]# pwd
     /etc/fdfs
     
@@ -380,7 +380,7 @@ HOST2:
     [root@localhost fdfs]# fdfs_storaged torage_A.conf
     [root@localhost fdfs]# fdfs_storaged torage_C.conf
     [root@localhost fdfs]# /usr/local/nginx/sbin/nginx
-HOST3:
+##### HOST3:
     [root@localhost fdfs]# pwd
     /etc/fdfs
     
@@ -423,7 +423,7 @@ HOST3:
     file crc32=1299842768
     file url: http://192.168.88.134:8080/groupB/M00/00/00/wKhYlVjSGkmAKSsbAAAFX016BtA960_big.cfg
 
-http下载测试
+##### http下载测试
 
     [root@localhost fdfs]# wget http://192.168.88.134:8080/groupB/M00/00/00/wKhYlVjSGkmAKSsbAAAFX016BtA960.cfg
     --2017-03-22 02:33:17--  http://192.168.88.134:8080/groupB/M00/00/00/wKhYlVjSGkmAKSsbAAAFX016BtA960.cfg
