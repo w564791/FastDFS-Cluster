@@ -368,25 +368,26 @@ HOST1:
     /etc/fdfs
     
     [root@localhost fdfs]# fdfs_trackerd  tracker.conf
-    
     [root@localhost fdfs]# fdfs_storaged torage_A.conf
-    
-    [root@localhost fdfs]# fdfs_storaged torage_B.conf
-    
+    [root@localhost fdfs]# fdfs_storaged torage_B.conf    
     [root@localhost fdfs]# /usr/local/nginx/sbin/nginx
     
 HOST2:
-
-    fdfs_trackerd  tracker.conf
-    fdfs_storaged torage_A.conf
-    fdfs_storaged torage_C.conf
-    /usr/local/nginx/sbin/nginx
+    [root@localhost fdfs]# pwd
+    /etc/fdfs
+    
+    [root@localhost fdfs]# fdfs_trackerd  tracker.conf
+    [root@localhost fdfs]# fdfs_storaged torage_A.conf
+    [root@localhost fdfs]# fdfs_storaged torage_C.conf
+    [root@localhost fdfs]# /usr/local/nginx/sbin/nginx
 HOST3:
-
-    fdfs_trackerd  tracker.conf
-    fdfs_storaged torage_C.conf
-    fdfs_storaged torage_B.conf
-    /usr/local/nginx/sbin/nginx
+    [root@localhost fdfs]# pwd
+    /etc/fdfs
+    
+    [root@localhost fdfs]# fdfs_trackerd  tracker.conf
+    [root@localhost fdfs]# fdfs_storaged torage_C.conf
+    [root@localhost fdfs]# fdfs_storaged torage_B.conf
+    [root@localhost fdfs]# /usr/local/nginx/sbin/nginx
 ##### 测试:
 为方便测试,本例子存储时使用轮训方法,实际使用建议按照空间剩余方法来存储
 
