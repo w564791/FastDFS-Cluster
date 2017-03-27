@@ -366,10 +366,15 @@ HOST1:
 
     [root@localhost fdfs]# pwd
     /etc/fdfs
-    fdfs_trackerd  tracker.conf
-    fdfs_storaged torage_A.conf
-    fdfs_storaged torage_B.conf
-    /usr/local/nginx/sbin/nginx
+    
+    [root@localhost fdfs]# fdfs_trackerd  tracker.conf
+    
+    [root@localhost fdfs]# fdfs_storaged torage_A.conf
+    
+    [root@localhost fdfs]# fdfs_storaged torage_B.conf
+    
+    [root@localhost fdfs]# /usr/local/nginx/sbin/nginx
+    
 HOST2:
 
     fdfs_trackerd  tracker.conf
