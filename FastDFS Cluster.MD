@@ -334,7 +334,8 @@ PS:mod_fastdfs.conf是nginx或httpd使用的一些数据?默认位置/etc/fdfs/m
     nginx version: nginx/1.11.10
     built by gcc 4.8.5 20150623 (Red Hat 4.8.5-11) (GCC)
     configure arguments: --add-module=/usr/local/src/fastdfs-nginx-module/src/ --prefix=/usr/local/nginx
-    Nginx配置:
+
+#### Nginx配置:
     [root@localhost fdfs]# grep -Ev "#|^$" /usr/local/nginx/conf/nginx.conf
     worker_processes  1;
     events {
